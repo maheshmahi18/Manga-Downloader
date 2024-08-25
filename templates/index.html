@@ -54,7 +54,7 @@
             width: 45%;
         }
 
-        .btn-download, .btn-home, .btn-download-all {
+        .btn-download {
             width: 100%;
             padding: 10px;
             border: none;
@@ -64,10 +64,10 @@
             font-size: 16px;
             cursor: pointer;
             transition: background-color 0.3s, color 0.3s;
-            margin-top: 10px;
+            margin: 10px 0; /* Add space between buttons */
         }
 
-        .btn-download:hover, .btn-home:hover, .btn-download-all:hover {
+        .btn-download:hover {
             background-color: #286090;
         }
 
@@ -78,6 +78,14 @@
 
         .btn-downloading:hover {
             background-color: #ec971f;
+        }
+
+        .btn-hidden {
+            display: none;
+        }
+
+        .btn-download-all, .btn-clear-database, .btn-download-selected {
+            margin-top: 10px;
         }
 
         .message {
@@ -102,34 +110,14 @@
         .download-link:hover {
             color: #31b0d5;
         }
-
-        .checkbox {
-            margin-right: 10px;
-        }
-
-        .btn-download-selected {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            background-color: #5cb85c;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.3s, color 0.3s;
-            margin-top: 10px;
-        }
-
-        .btn-download-selected:hover {
-            background-color: #4cae4c;
-        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>Manga Downloader</h1>
-    <p>Note: Manga should be available on the @mangaforfree; Otherwise, it will not be downloaded.</p>
+    <a href="/" id="home-button" class="btn-download">Home</a>
+    <p>Note: Manga should be available on the specified website; otherwise, it will not be downloaded.</p>
 
     <form id="manga-form">
         <input type="text" id="base-url" placeholder="Enter URL" required>
@@ -137,14 +125,16 @@
             <input type="number" id="start-chapter" placeholder="From" required>
             <input type="number" id="end-chapter" placeholder="To" required>
         </div>
-        <button type="submit" class="btn-download">Download</button>
+        <button type="submit" id="download-button" class="btn-download">Download</button>
     </form>
 
     <div class="message" id="message"></div>
     <div class="download-links" id="download-links"></div>
-    <button class="btn-home" id="btn-home" style="display: none;">Home</button>
-    <button class="btn-download-all" id="btn-download-all" style="display: none;">Download All</button>
-    <button class="btn-download-selected" id="btn-download-selected" style="display: none;">Download Selected</button>
+
+    <!-- Buttons to manage downloads -->
+    <button id="download-all" class="btn-download btn-hidden">Download All Files</button>
+    <button id="clear-database" class="btn-download btn-hidden">Clear Database</button>
+    <button id="download-selected" class="btn-download btn-hidden">Download Selected Files</button>
 </div>
 
 <script>
@@ -155,8 +145,12 @@
         const endChapter = document.getElementById('end-chapter').value;
         const message = document.getElementById('message');
         const downloadLinks = document.getElementById('download-links');
-        const downloadButton = document.querySelector('.btn-download');
+        const downloadButton = document.getElementById('download-button');
+        const downloadAllButton = document.getElementById('download-all');
+        const clearDatabaseButton = document.getElementById('clear-database');
+        const downloadSelectedButton = document.getElementById('download-selected');
 
+        // Set button state to downloading
         downloadButton.textContent = 'Download in Progress';
         downloadButton.classList.add('btn-downloading');
         downloadButton.disabled = true;
@@ -171,75 +165,141 @@
                 start_chapter: startChapter,
                 end_chapter: endChapter
             })
-        }).then(response => response.json())
-          .then(data => {
-              message.textContent = data.status;
-              downloadLinks.innerHTML = '';
+        }).then(response => {
+            if (!response.ok) throw new Error('Network response was not ok.');
+            return response.json();
+        })
+        .then(data => {
+            message.textContent = data.status;
+            downloadLinks.innerHTML = '';
 
-              if (data.files && data.files.length) {
-                  data.files.forEach(file => {
-                      const downloadItem = document.createElement('div');
-                      downloadItem.className = 'download-item';
+            if (data.files && data.files.length) {
+                data.files.forEach(file => {
+                    const downloadItem = document.createElement('div');
+                    downloadItem.className = 'download-item';
 
-                      const checkbox = document.createElement('input');
-                      checkbox.type = 'checkbox';
-                      checkbox.className = 'checkbox';
-                      checkbox.dataset.url = file.url;
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.value = file.url;
+                    checkbox.dataset.episode = file.episode;
 
-                      const label = document.createElement('span');
-                      label.textContent = file.episode;
+                    const label = document.createElement('span');
+                    label.textContent = file.episode;
 
-                      const button = document.createElement('a');
-                      button.href = file.url;
-                      button.textContent = 'Download';
-                      button.className = 'btn-download';
-                      button.style.marginLeft = '10px';
-                      button.download = true;
+                    const button = document.createElement('a');
+                    button.href = file.url;
+                    button.textContent = 'Download';
+                    button.className = 'btn-download';
+                    button.style.marginLeft = '10px';
+                    button.download = true;
 
-                      button.addEventListener('click', () => {
-                          button.textContent = 'Downloaded';
-                          button.classList.add('btn-downloaded');
-                          button.disabled = true;
-                      });
+                    button.addEventListener('click', () => {
+                        button.textContent = 'Downloaded';
+                        button.classList.add('btn-downloaded');
+                        button.disabled = true;
+                    });
 
-                      downloadItem.appendChild(checkbox);
-                      downloadItem.appendChild(label);
-                      downloadItem.appendChild(button);
-                      downloadLinks.appendChild(downloadItem);
-                  });
+                    downloadItem.appendChild(checkbox);
+                    downloadItem.appendChild(label);
+                    downloadItem.appendChild(button);
+                    downloadLinks.appendChild(downloadItem);
+                });
 
-                  document.getElementById('btn-home').style.display = 'block';
-                  document.getElementById('btn-download-all').style.display = 'block';
-                  document.getElementById('btn-download-selected').style.display = 'block';
-              }
+                // Update button text and state after files are loaded
+                downloadButton.textContent = 'Available to Download';
+                downloadButton.classList.remove('btn-downloading');
+                downloadButton.disabled = true;
 
-              downloadButton.textContent = 'Available to Download';
-              downloadButton.classList.remove('btn-downloading');
-              downloadButton.disabled = false;
-          })
-          .catch(error => {
-              message.textContent = 'Error: ' + error.message;
-              downloadButton.textContent = 'Retry';
-              downloadButton.classList.remove('btn-downloading');
-              downloadButton.disabled = false;
-          });
+                // Show additional buttons after download starts
+                downloadAllButton.classList.remove('btn-hidden');
+                clearDatabaseButton.classList.remove('btn-hidden');
+                downloadSelectedButton.classList.remove('btn-hidden');
+            } else {
+                // Handle case when no files are returned
+                message.textContent = 'No files found to download.';
+                downloadButton.textContent = 'Retry';
+                downloadButton.classList.remove('btn-downloading');
+                downloadButton.disabled = false;
+            }
+        })
+        .catch(error => {
+            message.textContent = 'Error: ' + error.message;
+            downloadButton.textContent = 'Retry';
+            downloadButton.classList.remove('btn-downloading');
+            downloadButton.disabled = false;
+        });
     });
 
-    document.getElementById('btn-home').addEventListener('click', () => {
-        window.location.href = '/';
+    document.getElementById('download-all').addEventListener('click', function() {
+        const startChapter = document.getElementById('start-chapter').value;
+        const endChapter = document.getElementById('end-chapter').value;
+
+        fetch('/download_all_files', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                start_chapter: startChapter,
+                end_chapter: endChapter
+            })
+        }).then(response => {
+            if (!response.ok) throw new Error('Network response was not ok.');
+            return response.json();
+        })
+        .then(data => {
+            if (data.zip_url) {
+                window.location.href = data.zip_url;
+            } else {
+                document.getElementById('message').textContent = 'Error downloading all files.';
+            }
+        })
+        .catch(error => {
+            document.getElementById('message').textContent = 'Error: ' + error.message;
+        });
     });
 
-    document.getElementById('btn-download-all').addEventListener('click', () => {
-        document.querySelectorAll('.btn-download').forEach(button => button.click());
+    document.getElementById('clear-database').addEventListener('click', function() {
+        fetch('/clear_database', { method: 'POST' })
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok.');
+                window.location.href = '/';
+            })
+            .catch(error => {
+                document.getElementById('message').textContent = 'Error: ' + error.message;
+            });
     });
 
-    document.getElementById('btn-download-selected').addEventListener('click', () => {
-        document.querySelectorAll('.checkbox:checked').forEach(checkbox => {
-            const url = checkbox.dataset.url;
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = true;
-            link.click();
+    document.getElementById('download-selected').addEventListener('click', function() {
+        const checkboxes = document.querySelectorAll('.download-item input[type="checkbox"]:checked');
+        const selectedFiles = Array.from(checkboxes).map(cb => cb.value);
+
+        if (selectedFiles.length === 0) {
+            document.getElementById('message').textContent = 'Please select at least one file to download.';
+            return;
+        }
+
+        fetch('/download_selected_files', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                files: selectedFiles
+            })
+        }).then(response => {
+            if (!response.ok) throw new Error('Network response was not ok.');
+            return response.json();
+        })
+        .then(data => {
+            if (data.zip_url) {
+                window.location.href = data.zip_url;
+            } else {
+                document.getElementById('message').textContent = 'Error downloading selected files.';
+            }
+        })
+        .catch(error => {
+            document.getElementById('message').textContent = 'Error: ' + error.message;
         });
     });
 </script>

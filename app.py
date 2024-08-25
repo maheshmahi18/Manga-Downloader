@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, jsonify, send_from_directory, send_file
+from flask import Flask, render_template, request, jsonify, send_from_directory
 import requests
 from bs4 import BeautifulSoup
 import os
 from urllib.parse import urljoin
 from PIL import Image
 import zipfile
+import shutil
 
 app = Flask(__name__)
 
@@ -65,17 +66,6 @@ def process_episode(base_url, episode_number, save_directory):
         return pdf_path
     return None
 
-@app.route('/download_selected', methods=['POST'])
-def download_selected():
-    selected_files = request.json.get('selected_files', [])
-    zip_filename = 'selected_files.zip'
-
-    with zipfile.ZipFile(zip_filename, 'w') as zipf:
-        for file_path in selected_files:
-            zipf.write(file_path, os.path.basename(file_path))
-
-    return send_file(zip_filename, as_attachment=True)
-
 @app.route('/download_manga', methods=['POST'])
 def download_manga():
     data = request.json
@@ -107,6 +97,46 @@ def download_manga():
 
     return jsonify({"status": "Download started", "files": file_list}), 200
 
+@app.route('/download_all_files', methods=['POST'])
+def download_all_files():
+    data = request.json
+    start_chapter = data.get('start_chapter')
+    end_chapter = data.get('end_chapter')
+
+    save_directory = 'manga_downloads'
+    zip_filename = 'all_files.zip'
+    zip_filepath = os.path.join(save_directory, zip_filename)
+
+    with zipfile.ZipFile(zip_filepath, 'w') as zipf:
+        for episode_number in range(int(start_chapter), int(end_chapter) + 1):
+            pdf_path = os.path.join(save_directory, f'Episode_{episode_number}.pdf')
+            if os.path.exists(pdf_path):
+                zipf.write(pdf_path, os.path.basename(pdf_path))
+
+    return jsonify({"zip_url": f'/static/{zip_filename}'}), 200
+
+@app.route('/download_selected_files', methods=['POST'])
+def download_selected_files():
+    data = request.json
+    files = data.get('files', [])
+    save_directory = 'manga_downloads'
+    zip_filename = 'selected_files.zip'
+    zip_filepath = os.path.join(save_directory, zip_filename)
+
+    with zipfile.ZipFile(zip_filepath, 'w') as zipf:
+        for file_url in files:
+            file_path = os.path.join(save_directory, os.path.basename(file_url))
+            if os.path.exists(file_path):
+                zipf.write(file_path, os.path.basename(file_path))
+
+    return jsonify({"zip_url": f'/static/{zip_filename}'}), 200
+
+@app.route('/clear_database', methods=['POST'])
+def clear_database():
+    save_directory = 'manga_downloads'
+    if os.path.exists(save_directory):
+        shutil.rmtree(save_directory)
+    return '', 204
 
 @app.route('/static/<filename>')
 def serve_file(filename):
