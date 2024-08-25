@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manga Downloader</title>
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            text-align: center;
+            width: 400px;
+            padding: 20px;
+            border: 1px solid #444;
+            border-radius: 10px;
+            background-color: #2e2e2e;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        p {
+            margin-bottom: 30px;
+            color: #bbbbbb;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #444;
+            border-radius: 5px;
+            background-color: #3a3a3a;
+            color: white;
+        }
+
+        .chapter-range {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        input[type="number"] {
+            width: 45%;
+        }
+
+        .btn-download, .btn-home, .btn-download-all {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #337ab7;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-download:hover, .btn-home:hover, .btn-download-all:hover {
+            background-color: #286090;
+        }
+
+        .btn-downloading {
+            background-color: #f0ad4e;
+            cursor: not-allowed;
+        }
+
+        .btn-downloading:hover {
+            background-color: #ec971f;
+        }
+
+        .message {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
+        .download-links {
+            margin-top: 20px;
+        }
+
+        .download-item {
+            margin: 10px 0;
+        }
+
+        .download-link {
+            color: #5bc0de;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        .download-link:hover {
+            color: #31b0d5;
+        }
+
+        .checkbox {
+            margin-right: 10px;
+        }
+
+        .btn-download-selected {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #5cb85c;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-download-selected:hover {
+            background-color: #4cae4c;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Manga Downloader</h1>
+    <p>Note: Manga should be available on the @mangaforfree; Otherwise, it will not be downloaded.</p>
+
+    <form id="manga-form">
+        <input type="text" id="base-url" placeholder="Enter URL" required>
+        <div class="chapter-range">
+            <input type="number" id="start-chapter" placeholder="From" required>
+            <input type="number" id="end-chapter" placeholder="To" required>
+        </div>
+        <button type="submit" class="btn-download">Download</button>
+    </form>
+
+    <div class="message" id="message"></div>
+    <div class="download-links" id="download-links"></div>
+    <button class="btn-home" id="btn-home" style="display: none;">Home</button>
+    <button class="btn-download-all" id="btn-download-all" style="display: none;">Download All</button>
+    <button class="btn-download-selected" id="btn-download-selected" style="display: none;">Download Selected</button>
+</div>
+
+<script>
+    document.getElementById('manga-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const baseUrl = document.getElementById('base-url').value;
+        const startChapter = document.getElementById('start-chapter').value;
+        const endChapter = document.getElementById('end-chapter').value;
+        const message = document.getElementById('message');
+        const downloadLinks = document.getElementById('download-links');
+        const downloadButton = document.querySelector('.btn-download');
+
+        downloadButton.textContent = 'Download in Progress';
+        downloadButton.classList.add('btn-downloading');
+        downloadButton.disabled = true;
+
+        fetch('/download_manga', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                base_url: baseUrl,
+                start_chapter: startChapter,
+                end_chapter: endChapter
+            })
+        }).then(response => response.json())
+          .then(data => {
+              message.textContent = data.status;
+              downloadLinks.innerHTML = '';
+
+              if (data.files && data.files.length) {
+                  data.files.forEach(file => {
+                      const downloadItem = document.createElement('div');
+                      downloadItem.className = 'download-item';
+
+                      const checkbox = document.createElement('input');
+                      checkbox.type = 'checkbox';
+                      checkbox.className = 'checkbox';
+                      checkbox.dataset.url = file.url;
+
+                      const label = document.createElement('span');
+                      label.textContent = file.episode;
+
+                      const button = document.createElement('a');
+                      button.href = file.url;
+                      button.textContent = 'Download';
+                      button.className = 'btn-download';
+                      button.style.marginLeft = '10px';
+                      button.download = true;
+
+                      button.addEventListener('click', () => {
+                          button.textContent = 'Downloaded';
+                          button.classList.add('btn-downloaded');
+                          button.disabled = true;
+                      });
+
+                      downloadItem.appendChild(checkbox);
+                      downloadItem.appendChild(label);
+                      downloadItem.appendChild(button);
+                      downloadLinks.appendChild(downloadItem);
+                  });
+
+                  document.getElementById('btn-home').style.display = 'block';
+                  document.getElementById('btn-download-all').style.display = 'block';
+                  document.getElementById('btn-download-selected').style.display = 'block';
+              }
+
+              downloadButton.textContent = 'Available to Download';
+              downloadButton.classList.remove('btn-downloading');
+              downloadButton.disabled = false;
+          })
+          .catch(error => {
+              message.textContent = 'Error: ' + error.message;
+              downloadButton.textContent = 'Retry';
+              downloadButton.classList.remove('btn-downloading');
+              downloadButton.disabled = false;
+          });
+    });
+
+    document.getElementById('btn-home').addEventListener('click', () => {
+        window.location.href = '/';
+    });
+
+    document.getElementById('btn-download-all').addEventListener('click', () => {
+        document.querySelectorAll('.btn-download').forEach(button => button.click());
+    });
+
+    document.getElementById('btn-download-selected').addEventListener('click', () => {
+        document.querySelectorAll('.checkbox:checked').forEach(checkbox => {
+            const url = checkbox.dataset.url;
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = true;
+            link.click();
+        });
+    });
+</script>
+
+</body>
+</html>
