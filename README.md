@@ -1,6 +1,20 @@
+Here is the `README.md` for the Manga Downloader project following the structure and style you provided:
+
+```markdown
 # Manga Downloader
 
-This is a simple web-based Manga downloader built with Flask. The application allows users to download manga chapters from a specified URL, convert the images to PDF format, and download all or selected chapters as a ZIP file. 
+This is a simple web-based Manga downloader built with Flask. The application allows users to download manga chapters from a specified URL, convert the images to PDF format, and download all or selected chapters as a ZIP file.
+
+## Table of Contents
+
+1. Features
+2. Installation and Setup
+3. Usage
+4. Deploying on Render
+5. File Structure
+6. Credits
+7. Contributing
+8. License
 
 ## Features
 
@@ -10,7 +24,7 @@ This is a simple web-based Manga downloader built with Flask. The application al
 - Download selected chapters as a ZIP file.
 - Clear the database of downloaded files.
 
-## Installation
+## Installation and Setup
 
 1. **Clone the Repository:**
 
@@ -88,21 +102,23 @@ To deploy this application on [Render](https://render.com/):
 ```
 
 ## Credits
-    
-    Manga Soucre: [Mangaforfree](https://mangaforfree.net)
-    Owner: [Mahesh](https://github.com/maheshmahi18/)
+
+- Manga Source: [MangaForFree](https://mangaforfree.net)
+- Owner: [Mahesh](https://github.com/maheshmahi18/)
 
 ## Contributing
 
 Contributions are welcome! If you want to contribute to this project:
 
-    1. Fork the repository.
-    2. Create a new branch for your feature or fix.
-    3. Make your changes and commit them.
-    4. Push to your forked repository.
-    5. Create a Pull Request to the main repository.
-
+1. Fork the repository.
+2. Create a new branch for your feature or fix.
+3. Make your changes and commit them.
+4. Push to your forked repository.
+5. Create a Pull Request to the main repository.
 
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for more information.
+```
+
+This `README.md` is structured to provide clear and concise information about the Manga Downloader project, making it easy for users and contributors to understand and interact with the project.
