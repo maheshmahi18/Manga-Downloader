@@ -85,3 +85,24 @@ To deploy this application on [Render](https://render.com/):
 ├── requirements.txt     # Python dependencies
 ├── README.md            # Project documentation
 └── static/              # Folder for serving static files
+
+
+## Credits
+    
+    Manga Soucre: [Mangaforfree](https://mangaforfree.net)
+    Owner: [Mahesh](https://github.com/maheshmahi18/)
+
+## Contributing
+
+Contributions are welcome! If you want to contribute to this project:
+
+    1. Fork the repository.
+    2. Create a new branch for your feature or fix.
+    3. Make your changes and commit them.
+    4. Push to your forked repository.
+    5. Create a Pull Request to the main repository.
+
+
+## License
+
+This project is licensed under the MIT License. See the LICENSE file for more information.
