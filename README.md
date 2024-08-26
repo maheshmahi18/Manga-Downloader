@@ -1,6 +1,5 @@
 Here is the `README.md` for the Manga Downloader project following the structure and style you provided:
 
-```markdown
 # Manga Downloader
 
 This is a simple web-based Manga downloader built with Flask. The application allows users to download manga chapters from a specified URL, convert the images to PDF format, and download all or selected chapters as a ZIP file.
