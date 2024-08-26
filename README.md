@@ -118,6 +118,3 @@ Contributions are welcome! If you want to contribute to this project:
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for more information.
-```
-
-This `README.md` is structured to provide clear and concise information about the Manga Downloader project, making it easy for users and contributors to understand and interact with the project.
