@@ -85,7 +85,7 @@ To deploy this application on [Render](https://render.com/):
 ├── requirements.txt     # Python dependencies
 ├── README.md            # Project documentation
 └── static/              # Folder for serving static files
-
+```
 
 ## Credits
     
