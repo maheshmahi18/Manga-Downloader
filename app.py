@@ -9,6 +9,9 @@ import shutil
 
 app = Flask(__name__)
 
+# Define the directory for saving manga downloads
+SAVE_DIRECTORY = r"D:\Visual Studio Code\Project_Md\manga_downloads"
+
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -41,28 +44,31 @@ def process_episode(base_url, episode_number, save_directory):
     soup = BeautifulSoup(response.content, 'html.parser')
     image_tags = soup.find_all('img')
 
-    if not image_tags:
-        print(f'No images found for episode {episode_number}.')
+    if len(image_tags) <= 4:
+        print(f'Not enough images to process for episode {episode_number}.')
         return None
 
     image_paths = []
-    image_count = 1
-
-    for img in image_tags:
-        img_url = img.get('src')
-        if img_url:
-            full_img_url = urljoin(webpage_url, img_url)
-            img_name = f'E{episode_number}IMG{image_count}.jpg'
-            save_path = os.path.join(save_directory_episode, img_name)
-            download_image(full_img_url, save_path)
-            image_paths.append(save_path)
-            image_count += 1
+    for index, img in enumerate(image_tags):
+        if 2 < index < len(image_tags) - 3:
+            img_url = img.get('src')
+            if img_url:
+                full_img_url = urljoin(webpage_url, img_url)
+                img_name = f'E{episode_number}IMG{index + 1}.jpg'
+                save_path = os.path.join(save_directory_episode, img_name)
+                download_image(full_img_url, save_path)
+                image_paths.append(save_path)
 
     if image_paths:
         images = [Image.open(img_path).convert('RGB') for img_path in image_paths]
         pdf_path = os.path.join(save_directory, f'Episode_{episode_number}.pdf')
         images[0].save(pdf_path, save_all=True, append_images=images[1:])
         print(f'PDF created: {pdf_path}')
+        
+        # Clean up the images after PDF creation
+        shutil.rmtree(save_directory_episode)
+        print(f'Deleted image folder: {save_directory_episode}')
+        
         return pdf_path
     return None
 
@@ -83,12 +89,9 @@ def download_manga():
     except ValueError:
         return jsonify({"error": "Chapter numbers must be integers."}), 400
 
-    save_directory = 'manga_downloads'
-    os.makedirs(save_directory, exist_ok=True)
-
     file_list = []
     for episode_number in range(start_chapter, end_chapter + 1):
-        pdf_path = process_episode(base_url, episode_number, save_directory)
+        pdf_path = process_episode(base_url, episode_number, SAVE_DIRECTORY)
         if pdf_path:
             file_list.append({
                 'episode': f'Episode {episode_number}',
@@ -103,13 +106,12 @@ def download_all_files():
     start_chapter = data.get('start_chapter')
     end_chapter = data.get('end_chapter')
 
-    save_directory = 'manga_downloads'
     zip_filename = 'all_files.zip'
-    zip_filepath = os.path.join(save_directory, zip_filename)
+    zip_filepath = os.path.join(SAVE_DIRECTORY, zip_filename)
 
     with zipfile.ZipFile(zip_filepath, 'w') as zipf:
         for episode_number in range(int(start_chapter), int(end_chapter) + 1):
-            pdf_path = os.path.join(save_directory, f'Episode_{episode_number}.pdf')
+            pdf_path = os.path.join(SAVE_DIRECTORY, f'Episode_{episode_number}.pdf')
             if os.path.exists(pdf_path):
                 zipf.write(pdf_path, os.path.basename(pdf_path))
 
@@ -119,13 +121,12 @@ def download_all_files():
 def download_selected_files():
     data = request.json
     files = data.get('files', [])
-    save_directory = 'manga_downloads'
     zip_filename = 'selected_files.zip'
-    zip_filepath = os.path.join(save_directory, zip_filename)
+    zip_filepath = os.path.join(SAVE_DIRECTORY, zip_filename)
 
     with zipfile.ZipFile(zip_filepath, 'w') as zipf:
         for file_url in files:
-            file_path = os.path.join(save_directory, os.path.basename(file_url))
+            file_path = os.path.join(SAVE_DIRECTORY, os.path.basename(file_url))
             if os.path.exists(file_path):
                 zipf.write(file_path, os.path.basename(file_path))
 
@@ -133,14 +134,14 @@ def download_selected_files():
 
 @app.route('/clear_database', methods=['POST'])
 def clear_database():
-    save_directory = 'manga_downloads'
-    if os.path.exists(save_directory):
-        shutil.rmtree(save_directory)
+    if os.path.exists(SAVE_DIRECTORY):
+        shutil.rmtree(SAVE_DIRECTORY)
+    os.makedirs(SAVE_DIRECTORY, exist_ok=True)
     return '', 204
 
 @app.route('/static/<filename>')
 def serve_file(filename):
-    return send_from_directory('manga_downloads', filename)
+    return send_from_directory(SAVE_DIRECTORY, filename)
 
 if __name__ == '__main__':
     app.run(debug=True)
