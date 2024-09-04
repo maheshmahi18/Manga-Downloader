@@ -50,14 +50,20 @@ def process_episode(base_url, episode_number, save_directory):
 
     image_paths = []
     for index, img in enumerate(image_tags):
-        if 2 < index < len(image_tags) - 3:
-            img_url = img.get('src')
-            if img_url:
-                full_img_url = urljoin(webpage_url, img_url)
-                img_name = f'E{episode_number}IMG{index + 1}.jpg'
-                save_path = os.path.join(save_directory_episode, img_name)
-                download_image(full_img_url, save_path)
-                image_paths.append(save_path)
+        img_url = img.get('src')
+        if img_url:
+            full_img_url = urljoin(webpage_url, img_url)
+            img_name = f'E{episode_number}IMG{index + 1}.jpg'
+            save_path = os.path.join(save_directory_episode, img_name)
+            download_image(full_img_url, save_path)
+            image_paths.append(save_path)
+
+    if "kissmanga" in base_url:
+        if len(image_paths) > 4:
+            image_paths = image_paths[3:-1]  # Exclude first 3 and last image
+    if "mangaforfree" in base_url:
+        if len(image_paths) > 4:
+            image_paths = image_paths[1:]  # Exclude first image only
 
     if image_paths:
         images = [Image.open(img_path).convert('RGB') for img_path in image_paths]
