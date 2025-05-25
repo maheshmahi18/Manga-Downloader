@@ -96,6 +96,7 @@ def download_manga():
         return jsonify({"error": "Chapter numbers must be integers."}), 400
 
     file_list = []
+    successful_downloads = 0
     for episode_number in range(start_chapter, end_chapter + 1):
         pdf_path = process_episode(base_url, episode_number, SAVE_DIRECTORY)
         if pdf_path:
@@ -103,8 +104,16 @@ def download_manga():
                 'episode': f'Episode {episode_number}',
                 'url': f'/static/{os.path.basename(pdf_path)}'
             })
+            successful_downloads += 1
 
-    return jsonify({"status": "Download started", "files": file_list}), 200
+    total_episodes_requested = end_chapter - start_chapter + 1
+    all_episodes_downloaded = successful_downloads == total_episodes_requested
+
+    return jsonify({
+        "status": "Download started", 
+        "files": file_list,
+        "all_episodes_downloaded": all_episodes_downloaded
+    }), 200
 
 @app.route('/download_all_files', methods=['POST'])
 def download_all_files():

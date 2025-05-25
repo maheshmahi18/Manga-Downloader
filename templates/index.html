@@ -137,6 +137,11 @@
     <button id="download-all" class="btn-download btn-hidden">Download All Files</button>
     <button id="clear-database" class="btn-download btn-hidden">Clear Database</button>
     <button id="download-selected" class="btn-download btn-hidden">Download Selected Files</button>
+
+    <!-- Audio element for alarm -->
+    <audio id="alarm-sound" src="static/ringtone.mp3" loop></audio>
+    <!-- Button to stop the alarm -->
+    <button id="stop-alarm-button" class="btn-download btn-hidden">Stop Alarm</button>
 </div>
 
 <script>
@@ -151,6 +156,8 @@
         const downloadAllButton = document.getElementById('download-all');
         const clearDatabaseButton = document.getElementById('clear-database');
         const downloadSelectedButton = document.getElementById('download-selected');
+        const alarmSoundElement = document.getElementById('alarm-sound');
+        const stopAlarmButton = document.getElementById('stop-alarm-button');
 
         // Set button state to downloading
         downloadButton.textContent = 'Download in Progress';
@@ -216,6 +223,24 @@
                 downloadAllButton.classList.remove('btn-hidden');
                 clearDatabaseButton.classList.remove('btn-hidden');
                 downloadSelectedButton.classList.remove('btn-hidden');
+
+                // Alarm logic
+                // MANUAL TESTING:
+                // 1. Verify alarm plays and "Stop Alarm" button appears if server sends all_episodes_downloaded = true
+                //    - Mock a server response where 'all_episodes_downloaded' is true and 'files' is not empty.
+                //    - Check if alarm-sound plays.
+                //    - Check if stop-alarm-button becomes visible.
+                // 2. Verify alarm does NOT play if all_episodes_downloaded = false
+                //    - Mock a server response where 'all_episodes_downloaded' is false.
+                //    - Check that alarm-sound does not play.
+                //    - Check that stop-alarm-button remains hidden.
+                // 3. Verify alarm does NOT play if files array is empty (even if all_episodes_downloaded = true, though this case shouldn't happen logically)
+                //    - Mock a server response where 'all_episodes_downloaded' is true but 'files' is empty.
+                //    - Check that alarm-sound does not play.
+                if (data.all_episodes_downloaded && data.files && data.files.length > 0) {
+                    alarmSoundElement.play();
+                    stopAlarmButton.classList.remove('btn-hidden');
+                }
             } else {
                 // Handle case when no files are returned
                 message.textContent = 'No files found to download.';
@@ -230,6 +255,18 @@
             downloadButton.classList.remove('btn-downloading');
             downloadButton.disabled = false;
         });
+    });
+
+    document.getElementById('stop-alarm-button').addEventListener('click', function() {
+        const alarmSoundElement = document.getElementById('alarm-sound');
+        // MANUAL TESTING for Stop Alarm button:
+        // 1. Click the "Stop Alarm" button while the alarm is playing.
+        // 2. Verify that the alarm sound stops immediately.
+        // 3. Verify that the alarm sound is reset to the beginning (currentTime = 0).
+        // 4. Verify that the "Stop Alarm" button becomes hidden.
+        alarmSoundElement.pause();
+        alarmSoundElement.currentTime = 0; // Reset audio to the beginning
+        this.classList.add('btn-hidden'); // 'this' refers to the stopAlarmButton
     });
 
     document.getElementById('download-all').addEventListener('click', function() {
